@@ -1,0 +1,42 @@
+version: "3.8"
+services:
+
+  # nginx コンテナ
+  nginx:
+    image: nginx:latest
+    ports:
+      - 80:80
+    volumes:
+      - ./src:/usr/share/nginx/html
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+
+  # PHP-FPM コンテナ
+  php-fpm:
+    build:
+      context: ./dockerfiles/php-fpm
+    volumes:
+      - ./src:/usr/share/nginx/html
+      - ./dockerfiles/php-fpm/config/php-fpm.conf:/usr/local/etc/php-fpm.conf
+      - ./dockerfiles/php-fpm/config/php.ini:/usr/local/etc/php/php.ini
+
+  mysql:
+    build:
+      context: dockerfiles/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: db
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./dockerfiles/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: password
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
